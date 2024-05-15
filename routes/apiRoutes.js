@@ -38,16 +38,27 @@ router.post('/notes', (req, res) => {
 });
 
 // Bonus: Delete a note
-router.delete('/api/notes/:id', (req, res) => {
-    const noteId = parseInt(req.params.id);
+router.delete('/notes/:id', (req, res) => {
+    const noteId = req.params.id;
     fs.readFile(dbPath, 'utf8', (err, data) => {
-        if (err) throw err;
-        let notes = JSON.parse(data);
-        notes = notes.filter(note => note.id !== noteId);
-        fs.writeFile(dbPath, JSON.stringify(notes, null, 4), (err) => {
-            if (err) throw err;
-            res.json({ msg: 'Note deleted' });
-        });
+        if (err) {
+            console.error("Error reading file:", err);
+            return res.status(500).json({ error: "Failed to read data file." });
+        }
+        try {
+            let notes = JSON.parse(data);
+            notes = notes.filter(note => note.id !== noteId);
+            fs.writeFile(dbPath, JSON.stringify(notes, null, 4), (err) => {
+                if (err) {
+                    console.error("Error writing file:", err);
+                    return res.status(500).json({ error: "Failed to write data file." });
+                }
+                res.json({ msg: 'Note deleted' });
+            });
+        } catch (error) {
+            console.error("Error parsing JSON:", error);
+            res.status(500).json({ error: "Failed to parse data file." });
+        }
     });
 });
 
